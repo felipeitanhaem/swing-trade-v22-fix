@@ -1,0 +1,37 @@
+name: Gerar APK Automatico
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+      - run: npm install
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npx expo prebuild --platform android --clean
+      - name: Fix colors
+        run: |
+          mkdir -p android/app/src/main/res/values
+          cat > android/app/src/main/res/values/colors.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+            <color name="splashscreen_background">#000000</color>
+            <color name="splashscreen_background_dark">#000000</color>
+            <color name="colorPrimary">#000000</color>
+            <color name="colorPrimaryDark">#000000</color>
+            <color name="colorAccent">#FFA500</color>
+          </resources>
+          EOF
+      - run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SwingTrade-V22.1-FIX-Telegram-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
